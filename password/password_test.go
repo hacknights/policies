@@ -3,6 +3,7 @@ package password
 import (
 	"errors"
 	"fmt"
+	"policies"
 	"testing"
 
 	"github.com/hacknights/testing/assert"
@@ -82,23 +83,20 @@ func TestSpecialCharacterPolicy_1(t *testing.T) {
 var policyCheckerError string = fmt.Sprintf("%s\n%s\n%s\n%s", minimumLengthError, uppercaseError, lowercaseError, specialCharacterError)
 
 func TestPolicyCheck_0_0(t *testing.T) {
-	pc := NewPasswordPolicyChecker()
-	if err := pc.PolicyCheck(""); err.Error() != policyCheckerError {
+	if err := PolicyCheck(""); err.Error() != policyCheckerError {
 		assert.Error(t, policyCheckerError, err)
 	}
 }
 
 func TestPolicyCheck__0(t *testing.T) {
-	pc := NewPasswordPolicyChecker()
-	if err := pc.PolicyCheck("mYpa$"); err != nil {
+	if err := PolicyCheck("mYpa$"); err != nil {
 		assert.Error(t, nil, err)
 	}
 }
 
 func TestPolicyCheck__1(t *testing.T) {
-	pc := NewPasswordPolicyChecker()
-	if err := pc.PolicyCheck("", func(v interface{}) error {
-		if len := len(password(v)); len != 0 {
+	if err := PolicyCheck("", func(v interface{}) error {
+		if len := len(policies.String(v)); len != 0 {
 			return errors.New("FAILED")
 		}
 		return nil

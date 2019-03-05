@@ -6,19 +6,11 @@ import (
 	"policies"
 )
 
-type usernamePolicyChecker struct{}
-
-// NewUsernamePolicyChecker returns a pointer to a
-// usernamePolicyChecker
-func NewUsernamePolicyChecker() *usernamePolicyChecker {
-	return &usernamePolicyChecker{}
-}
-
 // PolicyCheck receives a username and checks it
 // against all username policies
 // IF no policies are passed to PolicyCheck, the
 // default policies will be used
-func (p *usernamePolicyChecker) PolicyCheck(v interface{}, policyFuncs ...policies.PolicyFunc) error {
+func PolicyCheck(v interface{}, policyFuncs ...policies.PolicyFunc) error {
 	if len := len(policyFuncs); len == 0 {
 		policyFuncs = defaultPolicies()
 	}

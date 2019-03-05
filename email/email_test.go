@@ -23,22 +23,19 @@ func TestParsedEmailPolicy_Format_Bad(t *testing.T) {
 }
 
 func TestPolicyCheck_0_0(t *testing.T) {
-	pc := NewEmailPolicyChecker()
-	if err := pc.PolicyCheck(""); err.Error() != parsedEmailError {
+	if err := PolicyCheck(""); err.Error() != parsedEmailError {
 		assert.Error(t, parsedEmailError, err)
 	}
 }
 
 func TestPolicyCheck__0(t *testing.T) {
-	pc := NewEmailPolicyChecker()
-	if err := pc.PolicyCheck("test@test.com"); err != nil {
+	if err := PolicyCheck("test@test.com"); err != nil {
 		assert.Error(t, nil, err)
 	}
 }
 
 func TestPolicyCheck__1(t *testing.T) {
-	pc := NewEmailPolicyChecker()
-	if err := pc.PolicyCheck("", func(v interface{}) error {
+	if err := PolicyCheck("", func(v interface{}) error {
 		if len := len(policies.String(v)); len != 0 {
 			return errors.New("FAILED")
 		}

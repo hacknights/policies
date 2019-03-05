@@ -6,19 +6,11 @@ import (
 	"policies"
 )
 
-type emailPolicyChecker struct{}
-
-// NewEmailPolicyChecker returns a pointer to an
-// emailPolicyChecker
-func NewEmailPolicyChecker() *emailPolicyChecker {
-	return &emailPolicyChecker{}
-}
-
 // PolicyCheck receives an email and checks it
 // against all email policies
 // IF no policies are passed to PolicyCheck, the
 // default policies will be used
-func (p *emailPolicyChecker) PolicyCheck(v interface{}, policyFuncs ...policies.PolicyFunc) error {
+func PolicyCheck(v interface{}, policyFuncs ...policies.PolicyFunc) error {
 	if len := len(policyFuncs); len == 0 {
 		policyFuncs = defaultPolicies()
 	}

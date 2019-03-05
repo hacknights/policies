@@ -38,22 +38,19 @@ func TestMaximumLengthPolicy_40(t *testing.T) {
 }
 
 func TestPolicyCheck_0_0(t *testing.T) {
-	pc := NewUsernamePolicyChecker()
-	if err := pc.PolicyCheck(""); err.Error() != minimumLengthError {
+	if err := PolicyCheck(""); err.Error() != minimumLengthError {
 		assert.Error(t, minimumLengthError, err)
 	}
 }
 
 func TestPolicyCheck__0(t *testing.T) {
-	pc := NewUsernamePolicyChecker()
-	if err := pc.PolicyCheck("mYpa$"); err != nil {
+	if err := PolicyCheck("mYpa$"); err != nil {
 		assert.Error(t, nil, err)
 	}
 }
 
 func TestPolicyCheck__1(t *testing.T) {
-	pc := NewUsernamePolicyChecker()
-	if err := pc.PolicyCheck("", func(v interface{}) error {
+	if err := PolicyCheck("", func(v interface{}) error {
 		if len := len(policies.String(v)); len != 0 {
 			return errors.New("FAILED")
 		}

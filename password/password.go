@@ -8,19 +8,11 @@ import (
 	"policies"
 )
 
-type passwordPolicyChecker struct{}
-
-// NewPasswordPolicyChecker returns a pointer to a
-// passwordPolicyChecker
-func NewPasswordPolicyChecker() *passwordPolicyChecker {
-	return &passwordPolicyChecker{}
-}
-
 // PolicyCheck receives a password and checks it
 // against all password policies
 // IF no policies are passed to PolicyCheck, the
 // default policies will be used
-func (p *passwordPolicyChecker) PolicyCheck(v interface{}, policyFuncs ...policies.PolicyFunc) error {
+func PolicyCheck(v interface{}, policyFuncs ...policies.PolicyFunc) error {
 	if len := len(policyFuncs); len == 0 {
 		policyFuncs = defaultPolicies()
 	}
