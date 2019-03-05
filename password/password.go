@@ -3,7 +3,6 @@ package password
 import (
 	"errors"
 	"fmt"
-	"messages"
 	"regexp"
 
 	"policies"
@@ -21,18 +20,11 @@ func NewPasswordPolicyChecker() *passwordPolicyChecker {
 // against all password policies
 // IF no policies are passed to PolicyCheck, the
 // default policies will be used
-func (p *passwordPolicyChecker) PolicyCheck(v interface{}, policies ...policies.PolicyFunc) error {
-	if len := len(policies); len == 0 {
-		policies = defaultPolicies()
+func (p *passwordPolicyChecker) PolicyCheck(v interface{}, policyFuncs ...policies.PolicyFunc) error {
+	if len := len(policyFuncs); len == 0 {
+		policyFuncs = defaultPolicies()
 	}
-
-	eb := messages.NewErrorBuilder()
-	for _, p := range policies {
-		if err := p(v); err != nil {
-			eb.WriteError(err)
-		}
-	}
-	return eb.Error()
+	return policies.PolicyCheck(v, policyFuncs...)
 }
 
 func defaultPolicies() []policies.PolicyFunc {
@@ -46,14 +38,14 @@ func defaultPolicies() []policies.PolicyFunc {
 }
 
 func minimumLengthPolicy(v interface{}) error {
-	if len := len(password(v)); len < 3 {
+	if len := len(policies.String(v)); len < 3 {
 		return errors.New("password must contain no less than 3 characters")
 	}
 	return nil
 }
 
 func maximumLengthPolicy(v interface{}) error {
-	if len := len(password(v)); 40 < len {
+	if len := len(policies.String(v)); 40 < len {
 		return errors.New("password must contain no more than 40 characters")
 	}
 	return nil
@@ -61,7 +53,7 @@ func maximumLengthPolicy(v interface{}) error {
 
 func uppercasePolicy(v interface{}) error {
 	r := regexp.MustCompile(`[A-Z]+`)
-	if !r.MatchString(password(v)) {
+	if !r.MatchString(policies.String(v)) {
 		return errors.New("password must contain no less than 1 uppercase letter")
 	}
 	return nil
@@ -69,7 +61,7 @@ func uppercasePolicy(v interface{}) error {
 
 func lowercasePolicy(v interface{}) error {
 	r := regexp.MustCompile(`[a-z]+`)
-	if !r.MatchString(password(v)) {
+	if !r.MatchString(policies.String(v)) {
 		return errors.New("password must contain at least 1 lowercase letter")
 	}
 	return nil
@@ -78,12 +70,8 @@ func lowercasePolicy(v interface{}) error {
 func specialCharacterPolicy(v interface{}) error {
 	const runes = "!@#$%^&*()"
 	r := regexp.MustCompile(fmt.Sprintf("[%s]+", runes))
-	if !r.MatchString(password(v)) {
+	if !r.MatchString(policies.String(v)) {
 		return errors.New(fmt.Sprintf("password must contain no less than 1 special character: (i.e. %s)", runes))
 	}
 	return nil
-}
-
-func password(v interface{}) string {
-	return v.(string)
 }
