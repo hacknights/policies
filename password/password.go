@@ -3,73 +3,87 @@ package password
 import (
 	"errors"
 	"fmt"
+	"messages"
 	"regexp"
 
-	"github.com/hacknights/messages"
+	"policies"
 )
 
-type password struct{}
+type passwordPolicyChecker struct{}
 
-// NewPassword returns a pointer
-// to a password polic
-func NewPassword() *password {
-	return &password{}
+// NewPasswordPolicyChecker returns a pointer to a
+// passwordPolicyChecker
+func NewPasswordPolicyChecker() *passwordPolicyChecker {
+	return &passwordPolicyChecker{}
 }
 
-// Check receives a password and checks it
+// PolicyCheck receives a password and checks it
 // against all password policies
-func (p *password) Check(password string) error {
-	b := messages.NewErrorBuilder()
-	if err := p.length(password); err != nil {
-		b.WriteError(err)
+// IF no policies are passed to PolicyCheck, the
+// default policies will be used
+func (p *passwordPolicyChecker) PolicyCheck(v interface{}, policies ...policies.PolicyFunc) error {
+	if len := len(policies); len == 0 {
+		policies = defaultPolicies()
 	}
 
-	if err := p.uppercase(password); err != nil {
-		b.WriteError(err)
+	eb := messages.NewErrorBuilder()
+	for _, p := range policies {
+		if err := p(v); err != nil {
+			eb.WriteError(err)
+		}
 	}
+	return eb.Error()
+}
 
-	if err := p.lowercase(password); err != nil {
-		b.WriteError(err)
-	}
+func defaultPolicies() []policies.PolicyFunc {
+	policies := []policies.PolicyFunc{}
+	policies = append(policies, minimumLengthPolicy)
+	policies = append(policies, maximumLengthPolicy)
+	policies = append(policies, uppercasePolicy)
+	policies = append(policies, lowercasePolicy)
+	policies = append(policies, specialCharacterPolicy)
+	return policies
+}
 
-	if err := p.specialCharacter(password); err != nil {
-		b.WriteError(err)
-	}
-
-	if err := b.Error(); err != nil {
-		return err
+func minimumLengthPolicy(v interface{}) error {
+	if len := len(password(v)); len < 3 {
+		return errors.New("password must contain no less than 3 characters")
 	}
 	return nil
 }
 
-func (p *password) length(password string) error {
-	if len := len(password); len < 3 || 40 < len {
-		return errors.New("password must be greater than 3 and less than 40")
+func maximumLengthPolicy(v interface{}) error {
+	if len := len(password(v)); 40 < len {
+		return errors.New("password must contain no more than 40 characters")
 	}
 	return nil
 }
 
-func (p *password) uppercase(password string) error {
+func uppercasePolicy(v interface{}) error {
 	r := regexp.MustCompile(`[A-Z]+`)
-	if !r.MatchString(password) {
-		return errors.New("password must contain at least 1 uppercase letter")
+	if !r.MatchString(password(v)) {
+		return errors.New("password must contain no less than 1 uppercase letter")
 	}
 	return nil
 }
 
-func (p *password) lowercase(password string) error {
+func lowercasePolicy(v interface{}) error {
 	r := regexp.MustCompile(`[a-z]+`)
-	if !r.MatchString(password) {
+	if !r.MatchString(password(v)) {
 		return errors.New("password must contain at least 1 lowercase letter")
 	}
 	return nil
 }
 
-func (p *password) specialCharacter(password string) error {
+func specialCharacterPolicy(v interface{}) error {
 	const runes = "!@#$%^&*()"
 	r := regexp.MustCompile(fmt.Sprintf("[%s]+", runes))
-	if !r.MatchString(password) {
-		return errors.New(fmt.Sprintf("password must contain at least 1 special character: (i.e. %s)", runes))
+	if !r.MatchString(password(v)) {
+		return errors.New(fmt.Sprintf("password must contain no less than 1 special character: (i.e. %s)", runes))
 	}
 	return nil
+}
+
+func password(v interface{}) string {
+	return v.(string)
 }

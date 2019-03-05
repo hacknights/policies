@@ -1,86 +1,108 @@
 package password
 
 import (
+	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/hacknights/testing/assert"
 )
 
-const passwordLengthErr = "password must be greater than 3 and less than 40"
+const minimumLengthError = "password must contain no less than 3 characters"
 
-func TestPasswordLength_2(t *testing.T) {
-	p := NewPassword()
-	if err := p.length("ab"); err.Error() != passwordLengthErr {
-		assert.Error(t, passwordLengthErr, err)
+func TestMinimumLengthPolicy_0(t *testing.T) {
+	if err := minimumLengthPolicy(""); err.Error() != minimumLengthError {
+		assert.Error(t, minimumLengthError, err)
 	}
 }
 
-func TestPasswordLength_41(t *testing.T) {
-	p := NewPassword()
-	if err := p.length("abcdefghijklmnopqrztuvwxyzabcdefghijklmno"); err.Error() != passwordLengthErr {
-		assert.Error(t, passwordLengthErr, err)
-	}
-}
-
-func TestPasswordLength_6(t *testing.T) {
-	p := NewPassword()
-	if err := p.length("abcdef"); err != nil {
+func TestMinimumLengthPolicy_3(t *testing.T) {
+	if err := minimumLengthPolicy("123"); err != nil {
 		assert.Error(t, nil, err)
 	}
 }
 
-const passwordUppercaseErr = "password must contain at least 1 uppercase letter"
+const maximumLengthError = "password must contain no more than 40 characters"
 
-func TestPasswordUpperCase_0(t *testing.T) {
-	p := NewPassword()
-	if err := p.uppercase("ab"); err.Error() != passwordUppercaseErr {
-		assert.Error(t, passwordUppercaseErr, err)
+func TestMaximumLengthPolicy_41(t *testing.T) {
+	const password = "abcdefghijklmnopqrstuvwxyzabcdefghijklmno"
+	if err := maximumLengthPolicy(password); err.Error() != maximumLengthError {
+		assert.Error(t, maximumLengthError, err)
 	}
 }
 
-func TestPasswordUppercase_1(t *testing.T) {
-	p := NewPassword()
-	if err := p.uppercase("aB"); err != nil {
+func TestMaximumLengthPolicy_40(t *testing.T) {
+	if err := maximumLengthPolicy("abcdefghijklmnopqrstuvwxyzabcdefghijklmn"); err != nil {
 		assert.Error(t, nil, err)
 	}
 }
 
-func TestPasswordLowercase_0(t *testing.T) {
-	p := NewPassword()
-	if err := p.lowercase("AB"); err.Error() != passwordLowercaseErr {
-		assert.Error(t, passwordUppercaseErr, nil)
+const uppercaseError = "password must contain no less than 1 uppercase letter"
+
+func TestUppercasePolicy_0(t *testing.T) {
+	if err := uppercasePolicy("ab"); err.Error() != uppercaseError {
+		assert.Error(t, uppercaseError, err)
 	}
 }
 
-const passwordLowercaseErr = "password must contain at least 1 lowercase letter"
-
-func TestPasswordLowercase_1(t *testing.T) {
-	p := NewPassword()
-	if err := p.lowercase("Ab"); err != nil {
+func TestUppercasePolicy_1(t *testing.T) {
+	if err := uppercasePolicy("aB"); err != nil {
 		assert.Error(t, nil, err)
 	}
 }
 
-const specialCharacterErr = "password must contain at least 1 special character: (i.e. !@#$%^&*())"
+const lowercaseError = "password must contain at least 1 lowercase letter"
 
-func TestPasswordSpecialCharacter_0(t *testing.T) {
-	p := NewPassword()
-	if err := p.specialCharacter("a4"); err.Error() != specialCharacterErr {
-		assert.Error(t, specialCharacterErr, err)
+func TestLowercasePolicy_0(t *testing.T) {
+	if err := lowercasePolicy("AB"); err.Error() != lowercaseError {
+		assert.Error(t, lowercaseError, err)
 	}
 }
 
-func TestPasswordCheck_Errors(t *testing.T) {
-	const expected = "password must be greater than 3 and less than 40\npassword must contain at least 1 uppercase letter\npassword must contain at least 1 lowercase letter\npassword must contain at least 1 special character: (i.e. !@#$%^&*())"
-	p := NewPassword()
-	if err := p.Check(""); err.Error() != expected {
-		assert.Error(t, expected, err)
+func TestLowercasePolicy_1(t *testing.T) {
+	if err := lowercasePolicy("Ab"); err != nil {
+		assert.Error(t, nil, err)
 	}
 }
 
-func TestPasswordCheck_Pass(t *testing.T) {
-	p := NewPassword()
-	if err := p.Check("1aB^gtS"); err != nil {
+const specialCharacterError = "password must contain no less than 1 special character: (i.e. !@#$%^&*())"
+
+func TestSpecialCharacterPolicy_0(t *testing.T) {
+	if err := specialCharacterPolicy("Qw3"); err.Error() != specialCharacterError {
+		assert.Error(t, specialCharacterError, err)
+	}
+}
+
+func TestSpecialCharacterPolicy_1(t *testing.T) {
+	if err := specialCharacterPolicy("Qw$"); err != nil {
+		assert.Error(t, nil, err)
+	}
+}
+
+var policyCheckerError string = fmt.Sprintf("%s\n%s\n%s\n%s", minimumLengthError, uppercaseError, lowercaseError, specialCharacterError)
+
+func TestPolicyCheck_0_0(t *testing.T) {
+	pc := NewPasswordPolicyChecker()
+	if err := pc.PolicyCheck(""); err.Error() != policyCheckerError {
+		assert.Error(t, policyCheckerError, err)
+	}
+}
+
+func TestPolicyCheck__0(t *testing.T) {
+	pc := NewPasswordPolicyChecker()
+	if err := pc.PolicyCheck("mYpa$"); err != nil {
+		assert.Error(t, nil, err)
+	}
+}
+
+func TestPolicyCheck__1(t *testing.T) {
+	pc := NewPasswordPolicyChecker()
+	if err := pc.PolicyCheck("", func(v interface{}) error {
+		if len := len(password(v)); len != 0 {
+			return errors.New("FAILED")
+		}
+		return nil
+	}); err != nil {
 		assert.Error(t, nil, err)
 	}
 }
